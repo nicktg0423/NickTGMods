@@ -2,7 +2,8 @@
 --- NickTG's challenge-run pack: RarityLock, ForceEdition, BossRush, and
 --- BurnDeck as separate modules on separate labeled tabs, plus a master
 --- Include-skips switch on the built-in Config tab (Steamodded fixes that
---- tab's label to "Config"; it serves as the pack's Misc section).
+--- tab's label to "Config"; it serves as the pack's Misc section), plus
+--- the Cursed Deck -- a new deck, no tab, opt-in by selecting it.
 ---
 --- Layout:
 ---   NickTGMods.lua      this file: config init, tab wiring, module loading
@@ -22,6 +23,9 @@
 ---   bossrush -> burndeck -> misc : hooks are disjoint (blind flow /
 ---       evaluate_play / blind-select UI), so this order is inert, but it is
 ---       fixed for reproducibility.
+---   curseddeck : pure SMODS.Back declaration -- zero hooks, no config, no
+---       tab -- so it is order-inert anywhere; loaded before misc so misc
+---       stays the tab-finalizing last module.
 ---
 --- Config is namespaced per module (config.raritylock, .forceedition,
 --- .bossrush, .burndeck, .misc). Steamodded's config serializer recurses
@@ -31,12 +35,16 @@
 ---
 --- PACK DEFAULTS: every module ships DISABLED -- unlike the standalones,
 --- which defaulted on -- so a fresh install behaves like vanilla until you
---- opt in per tab. Include skips defaults ON (vanilla behavior).
+--- opt in per tab. Include skips defaults ON (vanilla behavior). The
+--- Cursed Deck has no toggle: it registers in deck select and only
+--- applies if you pick it, so opt-in is inherent.
 ---
 --- The standalone RarityLock / ForceEdition / BossRush / BurnDeck mods must
 --- be REMOVED from the Mods folder before using this pack: they wrap the
 --- same globals and would double-apply (rarity re-rolled twice, editions
---- stamped twice, two burn wrappers).
+--- stamped twice, two burn wrappers). Remove standalone CursedDeck too:
+--- loading both yields two Cursed Deck entries in deck select (different
+--- keys: b_curseddeck_cursed vs b_ntgmods_cursed).
 
 --- Stable mod reference captured at load time (SMODS.current_mod is nil later).
 local THIS_MOD = SMODS.current_mod
@@ -65,6 +73,9 @@ if cfg.burndeck.enabled == nil then cfg.burndeck.enabled = false end
 cfg.misc = cfg.misc or {}
 if cfg.misc.include_skips == nil then cfg.misc.include_skips = true end
 
+-- curseddeck: deliberately no config namespace and no tab. The deck is a
+-- pure declaration; selecting it in deck select IS the opt-in.
+
 ----------------------------------------------------------------------
 -- Tab registry. Modules push {label, tab_definition_function} entries;
 -- the Misc module owns config_tab (the built-in "Config" tab).
@@ -79,6 +90,6 @@ end
 ----------------------------------------------------------------------
 -- Module load. Order matters (see header).
 ----------------------------------------------------------------------
-for _, m in ipairs({ 'raritylock', 'forceedition', 'bossrush', 'burndeck', 'misc' }) do
+for _, m in ipairs({ 'raritylock', 'forceedition', 'bossrush', 'burndeck', 'curseddeck', 'misc' }) do
     assert(SMODS.load_file('modules/' .. m .. '.lua'))()
 end
